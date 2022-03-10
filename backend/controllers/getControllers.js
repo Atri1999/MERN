@@ -1,23 +1,48 @@
-const getGoals=(req,res)=>{
-    res.json({message:"Goals got"})  
-}
+const asyncHandler=require('express-async-handler')
+const Goal=require('../models/goalModel')
 
-const postGoal=(req,res)=>{
+const getGoals=asyncHandler(async (req,res)=>{
+    const goals= await Goal.find()
+    res.json(goals)  
+})
+
+const postGoal=asyncHandler(async (req,res)=>{
     if(!req.body.text){
         res.status(400)
         throw new Error("Please add a text feild")
     }
-    res.status(200).json({message:"Goals posted"})  
-}
+    const goal=await Goal.create({
+        text: req.body.text
+    })
+    res.status(200).json(goal)  
+})
 
-const updateGoal=(req,res)=>{
+const updateGoal=asyncHandler(async (req,res)=>{
+
+    const goal=await Goal.findById(req.params.id)
+    if(!goal){
+        res.status(400)
+        throw new Error("Goal not found")
+    }
+
+    const updatedgoal=await Goal.findOneAndUpdate(
+        {_id: req.params.id},
+        { $set: req.body}
+    )
     
-    res.json({message:`Goals updated for ${req.params.id}`})
-}
+    res.status(200).json({goal,updatedgoal})
+})
 
-const deleteGoal=(req,res)=>{
-    res.json({message:`Goals deleted for  ${req.params.id}`}) 
-}
+const deleteGoal=asyncHandler(async (req,res)=>{
+    const goal=await Goal.findById(req.params.id)
+    if(!goal){
+        res.status(400)
+        throw new Error("Goal not found")
+    }
+
+    await goal.remove()
+    res.json(req.params.id) 
+})
 
 
 module.exports={
